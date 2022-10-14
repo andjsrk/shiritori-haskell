@@ -44,7 +44,7 @@ processTurn usedWords = do
   putStr " > "
   hFlush stdout
   word <- getLine
-  if word == ":exit" then return ()
+  if word == ":q" then return ()
   else
     fromJust $ ifM (getFirst . mconcat $ map (First . \check -> check word usedWords) checks)
       (\msg -> do
