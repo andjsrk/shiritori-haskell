@@ -1,12 +1,14 @@
 module Main where
 import System.IO
-import Control.Applicative
+import Data.Monoid
+import Data.Maybe
 
 type Then a b = (a -> b)
-type Else a b = (Maybe a -> b)
-ifJust :: Maybe a -> Then a (f b) -> Else a (f b) -> f b
-ifJust Nothing _ else_ = else_ Nothing
-ifJust (Just x) then_ _ = then_ x
+type Else b = b
+ifM :: (Monad m, Eq (m a), Monoid (m a)) => m a -> Then a b -> Else b -> m b
+ifM x th el
+  | x == mempty = return el
+  | otherwise   = th <$> x
 
 type ExpectationFailedMsg = String
 noProblem :: Maybe ExpectationFailedMsg
@@ -22,7 +24,7 @@ checkTooShort word _ =
   (2 <= length word) `isFalseThen`
     "The word must be 2 or more characters."
 
-checkWordStartsWithLastCharOfLastUsedWord word [] = noProblem
+checkWordStartsWithLastCharOfLastUsedWord _ [] = noProblem
 checkWordStartsWithLastCharOfLastUsedWord word (lastUsedWord:_) =
   (head word == last lastUsedWord) `isFalseThen`
     (word ++ " does not starts with " ++ [last lastUsedWord] ++ ".")
@@ -31,6 +33,7 @@ checkAlreadyUsed word usedWords =
   (word `notElem` usedWords) `isFalseThen`
     (word ++ " is already used.")
 
+checks :: [String -> [String] -> Maybe ExpectationFailedMsg]
 checks = [
     checkTooShort,
     checkWordStartsWithLastCharOfLastUsedWord,
@@ -43,12 +46,10 @@ processTurn usedWords = do
   word <- getLine
   if word == ":exit" then return ()
   else
-    ifJust (foldl (<|>) noProblem (map (\check -> check word usedWords) checks))
+    fromJust $ ifM (getFirst . mconcat $ map (First . \check -> check word usedWords) checks)
       (\msg -> do
         putStrLn msg
         processTurn usedWords)
-      (\_ ->
-        processTurn (word:usedWords))
+      (processTurn (word:usedWords))
 
-main = do
-  processTurn []
+main = processTurn []
