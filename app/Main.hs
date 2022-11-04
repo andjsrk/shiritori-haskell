@@ -1,24 +1,16 @@
 module Main where
 import System.IO
-import Data.Monoid
-import Data.Maybe
 
-type Then a b = (a -> b)
-type Else b = b
-ifM :: (Monad m, Eq (m a), Monoid (m a)) => m a -> Then a b -> Else b -> m b
-ifM x th el
-  | x == mempty = return el
-  | otherwise   = th <$> x
-
-type ExpectationFailedMsg = String
-noProblem :: Maybe ExpectationFailedMsg
-noProblem = Nothing
-thereIs :: ExpectationFailedMsg -> Maybe ExpectationFailedMsg
-thereIs = Just
-expected `isFalseThen` msg =
+type ErrorMsg = String
+type CheckResult = Either ErrorMsg ()
+noProblem :: CheckResult
+noProblem = Right ()
+thereIs :: ErrorMsg -> CheckResult
+thereIs = Left
+expected `isFalseThen` errorMsg =
   if expected
     then noProblem
-    else thereIs msg
+    else thereIs errorMsg
 
 checkTooShort word _ =
   (2 <= length word) `isFalseThen`
@@ -33,7 +25,7 @@ checkAlreadyUsed word usedWords =
   (word `notElem` usedWords) `isFalseThen`
     (word ++ " is already used.")
 
-checks :: [String -> [String] -> Maybe ExpectationFailedMsg]
+checks :: [String -> [String] -> CheckResult]
 checks = [
     checkTooShort,
     checkWordStartsWithLastCharOfLastUsedWord,
@@ -46,10 +38,11 @@ processTurn usedWords = do
   word <- getLine
   if word == ":q" then return ()
   else
-    fromJust $ ifM (getFirst . mconcat $ map (First . \check -> check word usedWords) checks)
+    either
       (\msg -> do
         putStrLn msg
         processTurn usedWords)
-      (processTurn (word:usedWords))
+      (\_ -> processTurn (word:usedWords))
+      (foldl (*>) noProblem $ map (\check -> check word usedWords) checks)
 
 main = processTurn []
