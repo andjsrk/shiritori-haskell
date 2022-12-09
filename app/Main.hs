@@ -43,6 +43,6 @@ processTurn usedWords = do
         putStrLn msg
         processTurn usedWords)
       (\_ -> processTurn (word:usedWords))
-      (foldl (*>) noProblem $ map (\check -> check word usedWords) checks)
+      (foldl (*>) noProblem $ map (($ usedWords) . ($ word)) checks)
 
 main = processTurn []
