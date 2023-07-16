@@ -15,8 +15,8 @@ checkTooShort word _ =
   (2 <= length word) `isFalseThen`
     "The word must be 2 or more characters."
 
-checkWordStartsWithLastCharOfLastUsedWord _ [] = Nothing
-checkWordStartsWithLastCharOfLastUsedWord word (lastUsedWord:_) =
+checkWordDoesNotStartWithLastCharOfLastUsedWord _ [] = Nothing
+checkWordDoesNotStartWithLastCharOfLastUsedWord word (lastUsedWord:_) =
   (head word == last lastUsedWord) `isFalseThen`
     (word ++ " does not starts with " ++ [last lastUsedWord] ++ ".")
 
@@ -27,7 +27,7 @@ checkAlreadyUsed word usedWords =
 checks :: [String -> [String] -> Maybe ErrorMsg]
 checks = [
     checkTooShort,
-    checkWordStartsWithLastCharOfLastUsedWord,
+    checkWordDoesNotStartWithLastCharOfLastUsedWord,
     checkAlreadyUsed
   ]
 
