@@ -1,22 +1,21 @@
 module Main where
 import System.IO
+import Data.Foldable
+
+f .> g = g . f
 
 type ErrorMsg = String
-type CheckResult = Either ErrorMsg ()
-noProblem :: CheckResult
-noProblem = Right ()
-thereIs :: ErrorMsg -> CheckResult
-thereIs = Left
+isFalseThen :: Bool -> ErrorMsg -> Maybe ErrorMsg
 expected `isFalseThen` errorMsg =
   if expected
-    then noProblem
-    else thereIs errorMsg
+    then Nothing
+    else Just errorMsg
 
 checkTooShort word _ =
   (2 <= length word) `isFalseThen`
     "The word must be 2 or more characters."
 
-checkWordStartsWithLastCharOfLastUsedWord _ [] = noProblem
+checkWordStartsWithLastCharOfLastUsedWord _ [] = Nothing
 checkWordStartsWithLastCharOfLastUsedWord word (lastUsedWord:_) =
   (head word == last lastUsedWord) `isFalseThen`
     (word ++ " does not starts with " ++ [last lastUsedWord] ++ ".")
@@ -25,7 +24,7 @@ checkAlreadyUsed word usedWords =
   (word `notElem` usedWords) `isFalseThen`
     (word ++ " is already used.")
 
-checks :: [String -> [String] -> CheckResult]
+checks :: [String -> [String] -> Maybe ErrorMsg]
 checks = [
     checkTooShort,
     checkWordStartsWithLastCharOfLastUsedWord,
@@ -38,11 +37,11 @@ processTurn usedWords = do
   word <- getLine
   if word == ":q" then return ()
   else
-    either
+    maybe
+      (processTurn (word:usedWords))
       (\msg -> do
         putStrLn msg
         processTurn usedWords)
-      (\_ -> processTurn (word:usedWords))
-      (foldl (*>) noProblem $ map (($ usedWords) . ($ word)) checks)
+      (asum $ map (($ word) .> ($ usedWords)) checks)
 
 main = processTurn []
