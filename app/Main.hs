@@ -13,12 +13,12 @@ expected `isFalseThen` errorMsg =
 
 checkTooShort word _ =
   (2 <= length word) `isFalseThen`
-    "The word must be 2 or more characters."
+    "A word must be 2 or more characters."
 
 checkWordDoesNotStartWithLastCharOfLastUsedWord _ [] = Nothing
 checkWordDoesNotStartWithLastCharOfLastUsedWord word (lastUsedWord:_) =
   (head word == last lastUsedWord) `isFalseThen`
-    (word ++ " does not starts with " ++ [last lastUsedWord] ++ ".")
+    (word ++ " does not start with " ++ [last lastUsedWord] ++ ".")
 
 checkAlreadyUsed word usedWords =
   (word `notElem` usedWords) `isFalseThen`
