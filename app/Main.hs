@@ -1,8 +1,7 @@
 module Main where
 import System.IO
 import Data.Foldable
-
-f .> g = g . f
+import Control.Arrow
 
 type ErrorMsg = String
 type Requirement = String -> [String] -> Maybe ErrorMsg
@@ -40,6 +39,6 @@ processTurn usedWords = do
       (\msg -> do
         putStrLn msg
         processTurn usedWords)
-      (asum $ map (($ word) .> ($ usedWords)) requirements)
+      (asum $ map (($ word) >>> ($ usedWords)) requirements)
 
 main = processTurn []
