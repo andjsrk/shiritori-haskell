@@ -11,17 +11,20 @@ require expected errorMsg =
     then Nothing
     else Just errorMsg
 
+requireNotTooShort :: Requirement
 requireNotTooShort word _ =
   require (2 <= length word) "A word must be 2 or more characters."
 
+requireWordStartsWithLastCharOfLastUsedWord :: Requirement
 requireWordStartsWithLastCharOfLastUsedWord _ [] = Nothing
 requireWordStartsWithLastCharOfLastUsedWord word (lastUsedWord:_) =
   require (head word == last lastUsedWord) (word ++ " does not start with " ++ [last lastUsedWord] ++ ".")
 
+requireNotAlreadyUsed :: Requirement
 requireNotAlreadyUsed word usedWords =
   require (word `notElem` usedWords) (word ++ " is already used.")
 
-requirements :: [String -> [String] -> Maybe ErrorMsg]
+requirements :: [Requirement]
 requirements = [
     requireNotTooShort,
     requireWordStartsWithLastCharOfLastUsedWord,
